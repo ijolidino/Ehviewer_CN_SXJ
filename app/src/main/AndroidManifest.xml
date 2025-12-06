@@ -185,6 +185,14 @@
                 <data android:pathPattern=".*\\.rar" />
                 <data android:pathPattern=".*\\.zip" />
             </intent-filter>
+
+            <intent-filter>
+                <action android:name="com.samsung.android.support.REMOTE_ACTION"/>
+            </intent-filter>
+
+            <meta-data
+                android:name="com.samsung.android.support.REMOTE_ACTION"
+                android:resource="@xml/s_pen_actions"/>
         </activity>
 
         <activity
@@ -267,7 +275,8 @@
 
         <service
             android:name="com.hippo.ehviewer.download.DownloadService"
-            android:label="@string/download_service_label" />
+            android:label="@string/download_service_label"
+            android:foregroundServiceType="dataSync" />
 
         <provider
             android:name="com.hippo.content.FileProvider"

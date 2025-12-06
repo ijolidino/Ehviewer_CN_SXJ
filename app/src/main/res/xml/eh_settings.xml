@@ -69,8 +69,18 @@
 
     <com.hippo.preference.SwitchPreference
         android:defaultValue="false"
+        android:key="theme_auto_switch"
+        android:title="@string/settings_eh_theme_auto_switch" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="false"
         android:key="apply_nav_bar_theme_color"
         android:title="@string/settings_eh_apply_nav_bar_theme_color" />
+
+    <Preference
+        android:key="system_theme"
+        android:title="@string/settings_eh_system_theme"
+        android:summary="未知" />
 
     <com.hippo.preference.ListPreference
         android:defaultValue="0"
@@ -172,6 +182,11 @@
         android:defaultValue="true"
         android:key="show_gallery_comment"
         android:title="@string/settings_eh_show_gallery_comment" />
+
+    <com.hippo.preference.SwitchPreference
+        android:defaultValue="true"
+        android:key="show_gallery_rating"
+        android:title="@string/settings_eh_show_gallery_rating" />
 
     <com.hippo.preference.ActivityPreference
         android:key="blickList"

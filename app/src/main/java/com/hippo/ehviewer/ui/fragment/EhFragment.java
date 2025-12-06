@@ -38,6 +38,7 @@ public class EhFragment extends BasePreferenceFragmentCompat
         addPreferencesFromResource(R.xml.eh_settings);
 
         Preference theme = findPreference(Settings.KEY_THEME);
+        Preference themeAutoSwitch = findPreference(Settings.KEY_THEME_AUTO_SWITCH);
         Preference applyNavBarThemeColor = findPreference(Settings.KEY_APPLY_NAV_BAR_THEME_COLOR);
         Preference gallerySite = findPreference(Settings.KEY_GALLERY_SITE);
         Preference listMode = findPreference(Settings.KEY_LIST_MODE);
@@ -48,7 +49,14 @@ public class EhFragment extends BasePreferenceFragmentCompat
         Preference showGalleryComment = findPreference(Settings.KEY_SHOW_GALLERY_COMMENT);
         Preference tagTranslationsSource = findPreference("tag_translations_source");
 
+        // System theme display
+        Preference systemTheme = findPreference("system_theme");
+        if (systemTheme != null) {
+            systemTheme.setSummary(getSystemThemeSummary());
+        }
+
         theme.setOnPreferenceChangeListener(this);
+        themeAutoSwitch.setOnPreferenceChangeListener(this);
         applyNavBarThemeColor.setOnPreferenceChangeListener(this);
         gallerySite.setOnPreferenceChangeListener(this);
         listMode.setOnPreferenceChangeListener(this);
@@ -104,7 +112,33 @@ public class EhFragment extends BasePreferenceFragmentCompat
         } else if (Settings.KEY_SHOW_GALLERY_COMMENT.equals(key)) {
             getActivity().setResult(Activity.RESULT_OK);
             return true;
+        } else if (Settings.KEY_THEME_AUTO_SWITCH.equals(key) && Boolean.TRUE.equals(newValue)) {
+            if (Settings.getDarkModeStatus(getContext())) {
+                Settings.putTheme(Settings.THEME_DARK);
+            } else {
+                Settings.putTheme(Settings.THEME_LIGHT);
+            }
+            ((EhApplication) getActivity().getApplication()).recreate();
+            return true;
         }
         return true;
+    }
+
+    private String getSystemThemeSummary() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            int uiMode = getContext().getResources().getConfiguration().uiMode;
+            int nightMode = uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+            switch (nightMode) {
+                case android.content.res.Configuration.UI_MODE_NIGHT_YES:
+                    return "深色";
+                case android.content.res.Configuration.UI_MODE_NIGHT_NO:
+                    return "浅色";
+                case android.content.res.Configuration.UI_MODE_NIGHT_UNDEFINED:
+                default:
+                    return "不可用";
+            }
+        } else {
+            return "不可用";
+        }
     }
 }

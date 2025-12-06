@@ -204,6 +204,8 @@ public class ArchiverDownloadDialog implements
             body.setVisibility(View.VISIBLE);
             dialog.dismiss();
             showTip(R.string.download_archive_started, LENGTH_SHORT);
+//            String fileName = galleryDetail.title.replaceAll("/","");
+            String fileName = createFileName(galleryDetail.title);
             Uri downloadUri = Uri.parse(downloadUrl);
             DownloadManager.Request request = new DownloadManager.Request(downloadUri);
             request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
@@ -212,7 +214,7 @@ public class ArchiverDownloadDialog implements
             request.setTitle(galleryDetail.title);
             request.setDescription(context.getString(R.string.download_archive_started));
             request.setVisibleInDownloadsUi(true);
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, ARCHIVER_PATH+galleryDetail.title + ".zip");
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, ARCHIVER_PATH+fileName + ".zip");
             request.allowScanningByMediaScanner();
 
             DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
@@ -275,8 +277,10 @@ public class ArchiverDownloadDialog implements
         private void checkDownloadStatus(long downloadId, android.app.DownloadManager downloadManager) {
             android.app.DownloadManager.Query query = new android.app.DownloadManager.Query();
             query.setFilterById(downloadId);//筛选下载任务，传入任务ID，可变参数
-            try (Cursor c = downloadManager.query(query)) {
-                if (c.moveToFirst()) {
+            Cursor c = null;
+            try {
+                c = downloadManager.query(query);
+                if (c != null && c.moveToFirst()) {
                     int status = c.getInt(c.getColumnIndexOrThrow(android.app.DownloadManager.COLUMN_STATUS));
                     switch (status) {
                         case android.app.DownloadManager.STATUS_PAUSED:
@@ -298,28 +302,69 @@ public class ArchiverDownloadDialog implements
                             break;
                     }
                 }
-            } catch (IllegalArgumentException | URISyntaxException e) {
+            } catch (IllegalArgumentException | URISyntaxException | NullPointerException e) {
                 Log.e(TAG, e.getMessage(), e);
+            } finally {
+                if (c != null) {
+                    c.close();
+                }
             }
         }
 
         private void unzipAndImportFile(Cursor cursor) throws IllegalArgumentException, URISyntaxException {
             String path = cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI));
             Uri uri = Uri.parse(path);
-            File zipFile = new File(new URI(uri.toString()));
             File tempDir = AppConfig.getExternalTempDir();
             if (tempDir == null) {
                 return;
             }
             long downloadId = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_ID));
-            String tempFilePath = tempDir.getPath() + "/" + galleryDetail.title;
-            String zipFilePath = zipFile.getPath();
+//            String fileName = galleryDetail.title.replaceAll("/","");
+            String fileName = createFileName(galleryDetail.title);
+            String tempFilePath = tempDir.getPath() + "/" + fileName;
+            
+            // Handle content:// URI by copying to temp file first
             new Thread(() -> {
-                boolean result = GZIPUtils.UnZipFolder(zipFilePath, tempFilePath);
-                if (!result) {
-                    return;
+                String zipFilePath;
+                File tempZipFile = null;
+                try {
+                    if ("file".equals(uri.getScheme())) {
+                        // Direct file URI, can use directly
+                        File zipFile = new File(uri.getPath());
+                        zipFilePath = zipFile.getPath();
+                    } else {
+                        // Content URI, need to copy to temp file first
+                        tempZipFile = new File(tempDir, fileName + ".zip");
+                        UniFile sourceFile = UniFile.fromUri(context, uri);
+                        if (sourceFile == null) {
+                            Log.e(TAG, "Cannot access source file: " + uri);
+                            return;
+                        }
+                        UniFile destFile = UniFile.fromFile(tempZipFile);
+                        if (destFile == null) {
+                            Log.e(TAG, "Cannot create temp zip file");
+                            return;
+                        }
+                        if (!FileUtils.copyFile(sourceFile, destFile, false)) {
+                            Log.e(TAG, "Failed to copy zip file to temp location");
+                            return;
+                        }
+                        zipFilePath = tempZipFile.getPath();
+                    }
+                    
+                    boolean result = GZIPUtils.UnZipFolder(zipFilePath, tempFilePath);
+                    if (!result) {
+                        return;
+                    }
+                    importGallery(tempFilePath, downloadId);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error in unzipAndImportFile", e);
+                } finally {
+                    // Clean up temporary zip file if it was created
+                    if (tempZipFile != null && tempZipFile.exists()) {
+                        tempZipFile.delete();
+                    }
                 }
-                importGallery(tempFilePath,downloadId);
             }).start();
         }
 
@@ -348,31 +393,43 @@ public class ArchiverDownloadDialog implements
                 return;
             }
             try {
-                File downloadFile = new File(new URI(downloadDir.getUri().toString()));
                 for (int i = 0; i < tempPictures.length; i++) {
                     File picture = tempPictures[i];
 
                     String fileName = picture.getName();
                     String[] nameArr = fileName.split("\\.");
                     String newName = SpiderDen.generateImageFilename(i, "." + nameArr[nameArr.length - 1]);
-                    String newPath = downloadFile.getPath() + "/" + newName;
-                    File moveToFile = new File(newPath);
-                    if (moveToFile.exists()) {
-                        if (!moveToFile.delete()) {
+                    
+                    // Use UniFile API instead of File
+                    UniFile destFile = downloadDir.findFile(newName);
+                    if (destFile != null && destFile.exists()) {
+                        if (!destFile.delete()) {
                             continue;
                         }
                     }
-                    boolean result = picture.renameTo(moveToFile);
-                    if (!result) {
-                        if (moveToFile.exists()) {
-                            if (!moveToFile.delete()) {
-                                continue;
-                            }
-                        }
-                        FileUtils.copyFile(picture, moveToFile);
+                    
+                    // Create the destination file
+                    destFile = downloadDir.createFile(newName);
+                    if (destFile == null) {
+                        Log.e(TAG, "Failed to create file: " + newName);
+                        continue;
+                    }
+                    
+                    // Copy from File to UniFile
+                    UniFile sourceFile = UniFile.fromFile(picture);
+                    if (sourceFile == null) {
+                        Log.e(TAG, "Failed to create UniFile from: " + picture.getPath());
+                        continue;
+                    }
+                    
+                    if (!FileUtils.copyFile(sourceFile, destFile, false)) {
+                        Log.e(TAG, "Failed to copy file: " + picture.getName() + " to " + newName);
+                        // Try to delete the created file if copy failed
+                        destFile.delete();
                     }
                 }
-            } catch (URISyntaxException ignored) {
+            } catch (Exception e) {
+                Log.e(TAG, "Error in importGallery", e);
             }
             boolean deleteTemp = tempFile.delete();
             if (!deleteTemp) {
@@ -396,5 +453,33 @@ public class ArchiverDownloadDialog implements
                 Settings.deleteArchiverDownload(downloadId);
             });
         }
+    }
+
+/**
+ * 去除输入字符串中的'\'、'/'、'|'字符
+ * 创建文件名的静态私有方法
+ * 限制文件名长度以避免"File name too long"错误
+ * @param name 原始名称参数
+ * @return 返回处理后的文件名字符串
+ */
+    static private String createFileName(String name){
+        if (name == null) {
+            throw new IllegalArgumentException("Input name cannot be null");
+        }
+        if (name.isEmpty()) {
+            return "";
+        }
+        String result = name.replaceAll("/","");
+        result = result.replaceAll("\\|","");
+        // 限制文件名长度，避免"File name too long"错误
+        // 考虑到 ARCHIVER_PATH (18字符) + ".zip" (4字符) + 路径分隔符
+        // 限制文件名在 200 个字符以内，为路径预留空间
+        final int MAX_FILENAME_LENGTH = 150;
+        if (result.length() > MAX_FILENAME_LENGTH) {
+            result = result.substring(0, MAX_FILENAME_LENGTH);
+        }
+        return result;
+        // 使用正则表达式替换非法字符
+//        return name.replaceAll("[\\\\/|]", "");
     }
 }

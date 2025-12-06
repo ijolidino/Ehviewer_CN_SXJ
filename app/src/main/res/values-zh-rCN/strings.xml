@@ -98,6 +98,7 @@
     <string name="error_please_login_first">请先登陆</string>
     <string name="error_empty_html">页面内容为空</string>
     <string name="error_cant_get_image">无法获取图片</string>
+    <string name="error_igneous_wrong">错误的igneous\n检查账号里站权限后重新登录</string>
 
     <string name="kokomade_tip">设置->Eh->画廊站点->e-hentai</string>
 
@@ -373,6 +374,8 @@
     <string name="sort_by_create_time_desc">按创建时间降序</string>
     <string name="sort_by_rating_asc">按评分升序</string>
     <string name="sort_by_rating_desc">按评分降序</string>
+    <string name="sort_by_name_asc">按名称升序</string>
+    <string name="sort_by_name_desc">按名称降序</string>
     <string name="download_start_all">全部开始</string>
     <string name="download_stop_all">全部停止</string>
     <string name="download_reset_reading_progress">重置阅读进度</string>
@@ -510,6 +513,7 @@
     <string name="settings_eh_excluded_languages_summary">在主页与搜索中隐藏指定语言的画廊</string>
     <string name="settings_eh_show_jpn_title">显示日文标题</string>
     <string name="settings_eh_show_gallery_comment">显示画廊评论</string>
+    <string name="settings_eh_show_gallery_rating">显示画廊评分</string>
     <string name="settings_eh_show_eh_event">显示E站事件</string>
     <string name="settings_eh_show_eh_limits">显示E站配额</string>
     <string name="settings_eh_show_jpn_title_summary">需同时在 EHentai 网站设置中启用 Japanese Title</string>
@@ -591,6 +595,8 @@
     <string name="settings_download_clean_redundancy_summary">清理下载目录中不在下载列表里的图片文件</string>
     <string name="settings_download_clean_redundancy_no_redundancy">未发现冗余</string>
     <string name="settings_download_clean_redundancy_done">完成冗余清理，共清理 %d 项</string>
+    <string name="settings_download_clean_invalid_download_summary">清空任何无效的下载项，尤其是下载未完整的下载项，不会清空已完成的下载项</string>
+    <string name="settings_download_clean_invalid_download">清空无效的下载项</string>
 
     <string name="settings_advanced">高级</string>
     <string name="settings_advanced_save_parse_error_body">解析失败时保存页面内容</string>
@@ -895,6 +901,7 @@
     <string name="from_hentai_home">%s 来自Hentai@Home</string>
     <string name="current_moderation_power">每分钟恢复 %s</string>
     <string name="reset_cost">花费 %s 重置</string>
+    <string name="ip_base_limits">IP基础限制</string>
     <string name="limit_unneed_reset">当前无需重置配额，请在刷新后重试~</string>
 
 
@@ -922,12 +929,32 @@
     <string name="cookie_in_clipboard_incorrect">Cookie格式不正确</string>
     <string name="settings_download_timeout">下载超时时间</string>
     <string name="download_timeout_unlimited">无上限</string>
-    <string name="settings_download_timeout_summary">%s(S),下载一张图片的最大可用时长。</string>
+    <string name="settings_download_timeout_summary">%s 秒，下载一张图片的最大可用时长。</string>
     <string name="have_new_version">点击查看新的画廊版本</string>
     <string name="archiver_downloading">档案下载中 %s</string>
     <string name="order">排序</string>
     <string name="sort_by_pub_time">按上传时间</string>
     <string name="sort_by_fav_time">按收藏时间</string>
     <string name="settings_eh_sign_out_restart">正在为您自动重启，请稍候</string>
+    <string name="settings_eh_theme_auto_switch">深色跟随系统</string>
+    <string name="settings_eh_system_theme">系统主题</string>
+
+    <!-- S-Pen Actions(Samsung only) -->
+    <string name="spen_previous_page">上一页</string>
+    <string name="spen_next_page">下一页</string>
+    <string name="category_all">全部</string>
+
+    <string name="import_local_archive">导入本地压缩包</string>
+    <string name="import_archive_title">选择压缩包文件</string>
+    <string name="import_archive_failed">压缩包导入失败</string>
+    <string name="archive_permission_lost">访问压缩包的权限已丢失，请重新导入压缩包文件。</string>
+    <string name="import_archive_processing">正在处理压缩包…</string>
+    <string name="import_archive_invalid_format">不支持的压缩包格式</string>
+    <string name="import_archive_already_imported">压缩包已导入</string>
+    <string name="import_archive_success">压缩包导入成功</string>
+    <string name="archive_not_accessible">压缩包文件无法访问</string>
+    <string name="imported_archive_info_title">本地导入信息</string>
+    <string name="imported_archive_info_message">这是从本地存储中导入的项目</string>
+    <string name="imported_archive_category">本地导入</string>
 
 </resources>

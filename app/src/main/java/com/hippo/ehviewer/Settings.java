@@ -64,6 +64,10 @@ public class Settings {
         sSettingsPre = PreferenceManager.getDefaultSharedPreferences(sContext);
         sArchiverPre = context.getSharedPreferences("archiver_cache",Context.MODE_PRIVATE);
         sEhConfig = loadEhConfig();
+        if (getDarkModeStatus(context) && isThemeAutoSwitchAvailable()) {
+            putTheme(THEME_DARK);
+        }
+
         fixDefaultValue();
     }
 
@@ -326,8 +330,14 @@ public class Settings {
         return mode == Configuration.UI_MODE_NIGHT_YES;
     }
 
+    public static final String KEY_THEME_AUTO_SWITCH = "theme_auto_switch";
+
+    public static boolean isThemeAutoSwitchAvailable() {
+        return getBoolean(KEY_THEME_AUTO_SWITCH, false);
+    }
+
     public static final String KEY_APPLY_NAV_BAR_THEME_COLOR = "apply_nav_bar_theme_color";
-    private static final boolean DEFAULT_APPLY_NAV_BAR_THEME_COLOR = true;
+    private static final boolean DEFAULT_APPLY_NAV_BAR_THEME_COLOR = false;
 
     public static boolean getApplyNavBarThemeColor() {
         return getBoolean(KEY_APPLY_NAV_BAR_THEME_COLOR, DEFAULT_APPLY_NAV_BAR_THEME_COLOR);
@@ -1313,6 +1323,18 @@ public class Settings {
 
     public static void setShowGalleryComment(boolean value) {
         putBoolean(KEY_SHOW_GALLERY_COMMENT, value);
+    }
+
+    public static final String KEY_SHOW_GALLERY_RATING = "show_gallery_rating";
+
+    private static boolean IS_SHOW_GALLERY_Rating = true;
+
+    public static boolean getShowGalleryRating() {
+        return getBoolean(KEY_SHOW_GALLERY_RATING, IS_SHOW_GALLERY_Rating);
+    }
+
+    public static void setShowGalleryRating(boolean value) {
+        putBoolean(KEY_SHOW_GALLERY_RATING, value);
     }
 
     public static final String KEY_CLOSE_AUTO_UPDATES = "close_auto_updates";
