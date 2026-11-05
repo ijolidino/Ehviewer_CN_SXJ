@@ -149,6 +149,10 @@
     <string name="error_empty_html">Empty page</string>
     <string name="error_cant_get_image">Can\'t get image</string>
     <string name="error_igneous_wrong">Wrong igneous\nmake sure you have permission and re-login</string>
+    <string name="gallery_gl_fallback_title">OpenGL renderer unavailable</string>
+    <string name="gallery_gl_fallback_message">This device cannot initialize EGL right now. Please return and try again later.</string>
+    <string name="gallery_gl_fallback_action_close">Back</string>
+    <string name="gallery_gl_fallback_toast">GL rendering failed, switched to safe fallback page</string>
 
     <string name="kokomade_tip">Settings->Eh->Gallery Site->e-hentai</string>
 
@@ -177,6 +181,7 @@
 
     <!-- Update -->
     <string name="update">Update</string>
+    <string name="update_dialog_sponsor">Treat the author</string>
     <string name="update_fail">Check for updates failed</string>
     <string name="update_plain">Version: %1$s\nSize: %2$s\n\n%3$s</string>
     <string name="update_fail_info">Click Yes to jump to Github homepage</string>
@@ -198,6 +203,7 @@
     <string name="search_normal">Normal Search</string>
     <string name="search_advance">Advance Options</string>
     <string name="search_image">Image Search</string>
+    <string name="tag_search_entrance">Tag Selector</string>
     <string name="search_normal_search">Normal search</string>
     <string name="search_subscription_search">Subscription search</string>
     <string name="search_specify_uploader">Specify uploader</string>
@@ -397,7 +403,14 @@
     <string name="download_stop_all">Stop all</string>
     <string name="download_reset_reading_progress">Reset reading progress</string>
     <string name="reset_reading_progress_message">Reset the reading progress of all downloaded galleries?</string>
+    <string name="reset_reading_progress_processing">Resetting reading progress...</string>
+    <string name="reset_reading_progress_done">Reading progress reset</string>
     <string name="download_service_label">EhViewer Download Service</string>
+    <string name="archiver_download_service_label">EhViewer Archive Download</string>
+    <string name="archiver_download_pause">Pause</string>
+    <string name="archiver_download_resume">Resume</string>
+    <string name="archiver_download_paused">Paused</string>
+    <string name="archiver_download_restart_no_range">Server does not support resume; restarting download</string>
     <string name="download_speed_text">%s</string>
     <string name="download_speed_text_2">%1$s, %2$s left</string>
     <string name="remember_download_label">Remember download label</string>
@@ -537,6 +550,12 @@
     <string name="settings_read_screen_rotation_portrait">Portrait</string>
     <string name="settings_read_screen_rotation_landscape">Landscape</string>
     <string name="settings_read_screen_rotation_sensor">Auto rotate</string>
+    <string name="settings_read_refresh_rate">Refresh rate</string>
+    <string name="settings_read_refresh_rate_default">Default</string>
+    <string name="settings_read_refresh_rate_60">60 Hz</string>
+    <string name="settings_read_refresh_rate_90">90 Hz</string>
+    <string name="settings_read_refresh_rate_120">120 Hz</string>
+    <string name="settings_read_refresh_rate_max">Display maximum</string>
     <string name="settings_read_reading_direction">Reading direction</string>
     <string name="settings_read_reading_direction_left_to_right">Left to right</string>
     <string name="settings_read_reading_direction_right_to_Left">Right to left</string>
@@ -848,5 +867,12 @@
     <string name="imported_archive_info_title">Local Import Info</string>
     <string name="imported_archive_info_message">This is an item imported from local storage</string>
     <string name="imported_archive_category">Local Import</string>
+    <string name="import_local_album">Import local album</string>
+    <string name="import_album_title">Select image folder</string>
+    <string name="import_album_processing">Importing album…</string>
+    <string name="import_album_failed">Failed to import album</string>
+    <string name="import_album_no_images">No supported images in the selected folder</string>
+    <string name="import_album_already_imported">Album already imported</string>
+    <string name="import_album_success">Imported %d images successfully</string>
 
 </resources>

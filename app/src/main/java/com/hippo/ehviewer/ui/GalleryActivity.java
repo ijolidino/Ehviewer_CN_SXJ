@@ -38,6 +38,7 @@ import android.os.Looper;
 import android.os.StrictMode;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Display;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -83,6 +84,7 @@ import com.hippo.lib.glgallery.GalleryView;
 import com.hippo.lib.glgallery.SimpleAdapter;
 import com.hippo.lib.glview.view.GLRootView;
 import com.hippo.unifile.UniFile;
+import com.hippo.ehviewer.util.ReadingRefreshRate;
 import com.hippo.util.ExceptionUtils;
 import com.hippo.util.SystemUiHelper;
 import com.hippo.widget.ColorView;
@@ -107,6 +109,10 @@ import java.io.OutputStream;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import javax.microedition.khronos.egl.EGL10;
+import javax.microedition.khronos.egl.EGLContext;
+import javax.microedition.khronos.egl.EGLDisplay;
 
 public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChangeListener, GalleryView.Listener {
 
@@ -357,6 +363,12 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             startPage = mCurrentIndex;
         }
 
+        if (!isEglAvailable()) {
+            mGalleryProvider.stop();
+            showGlFallbackView();
+            return;
+        }
+
         setContentView(R.layout.activity_gallery);
         mGLRootView = (GLRootView) ViewUtils.$$(this, R.id.gl_root_view);
         mGalleryAdapter = new GalleryAdapter(mGLRootView, mGalleryProvider);
@@ -407,6 +419,8 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
 
+        applyReadingRefreshRate();
+
         // Orientation
         int orientation;
         switch (Settings.getScreenRotation()) {
@@ -444,6 +458,37 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             FrameLayout mainLayout = (FrameLayout) ViewUtils.$$(this, R.id.main);
             mainLayout.addView(new GalleryGuideView(this));
         }
+    }
+
+    private boolean isEglAvailable() {
+        EGL10 egl = (EGL10) EGLContext.getEGL();
+        EGLDisplay display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
+        if (display == null || display == EGL10.EGL_NO_DISPLAY) {
+            return false;
+        }
+
+        int[] version = new int[2];
+        if (!egl.eglInitialize(display, version)) {
+            return false;
+        }
+
+        try {
+            int[] numConfig = new int[1];
+            return egl.eglChooseConfig(display, new int[]{EGL10.EGL_NONE}, null, 0, numConfig)
+                    && numConfig[0] > 0;
+        } catch (Throwable e) {
+            return false;
+        } finally {
+            egl.eglTerminate(display);
+        }
+    }
+
+    private void showGlFallbackView() {
+        setContentView(R.layout.activity_gallery_fallback);
+        View close = ViewUtils.$$(this, R.id.gl_fallback_close);
+        close.setOnClickListener(v -> finish());
+        Log.w("GalleryActivity", "EGL init failed, switch to non-GL fallback page");
+        Toast.makeText(this, R.string.gallery_gl_fallback_toast, Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -506,6 +551,7 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
     protected void onResume() {
         super.onResume();
 
+        applyReadingRefreshRate();
         if (mGLRootView != null) {
             mGLRootView.onResume();
         }
@@ -895,6 +941,29 @@ public class GalleryActivity extends EhActivity implements SeekBar.OnSeekBarChan
             lp.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE;
         }
         w.setAttributes(lp);
+    }
+
+    private void applyReadingRefreshRate() {
+        if (!ReadingRefreshRate.isSupported()) {
+            return;
+        }
+        Window window = getWindow();
+        WindowManager.LayoutParams lp = window.getAttributes();
+        int setting = Settings.getReadingRefreshRateHz();
+        if (setting == ReadingRefreshRate.SYSTEM_DEFAULT) {
+            lp.preferredRefreshRate = 0f;
+            lp.preferredDisplayModeId = 0;
+        } else {
+            Display.Mode mode = ReadingRefreshRate.findBestMode(getDisplay(), setting);
+            if (mode != null) {
+                lp.preferredDisplayModeId = mode.getModeId();
+                lp.preferredRefreshRate = 0f;
+            } else {
+                lp.preferredRefreshRate = 0f;
+                lp.preferredDisplayModeId = 0;
+            }
+        }
+        window.setAttributes(lp);
     }
 
     private void shareImage(int page) {

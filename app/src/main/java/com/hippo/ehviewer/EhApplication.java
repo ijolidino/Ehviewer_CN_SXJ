@@ -52,10 +52,13 @@ import com.hippo.ehviewer.client.EhEngine;
 import com.hippo.ehviewer.client.data.EhNewsDetail;
 import com.hippo.ehviewer.client.data.GalleryDetail;
 import com.hippo.ehviewer.client.data.userTag.UserTagList;
+import com.hippo.ehviewer.download.ArchiverDownloader;
 import com.hippo.ehviewer.download.DownloadManager;
 import com.hippo.ehviewer.spider.SpiderDen;
 import com.hippo.ehviewer.ui.CommonOperations;
 import com.hippo.lib.image.Image;
+//import com.hippo.lib.image.Image1;
+//import com.hippo.lib.image.ImageBitmap;
 import com.hippo.network.EhSSLSocketFactory;
 import com.hippo.network.EhSSLSocketFactoryLowSDK;
 import com.hippo.network.EhX509TrustManager;
@@ -92,6 +95,7 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import okhttp3.Cache;
+import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
@@ -173,6 +177,7 @@ public class EhApplication extends RecordingApplication {
         GetText.initialize(this);
         StatusCodeException.initialize(this);
         Settings.initialize(this);
+        ArchiverDownloader.resumePending(this);
         ReadableTime.initialize(this);
         Html.initialize(this);
         AppConfig.initialize(this);
@@ -180,6 +185,7 @@ public class EhApplication extends RecordingApplication {
         EhDB.initialize(this);
         EhEngine.initialize();
         BitmapUtils.initialize(this);
+//        Image1.initialize(this);
         Image.initialize(this);
         Native.initialize();
         // 实际作用不确定，但是与64位应用有冲突
@@ -224,7 +230,7 @@ public class EhApplication extends RecordingApplication {
 
                 return null;
             }
-        }.executeOnExecutor(IoThreadPoolExecutor.getInstance());
+        }.executeOnExecutor(IoThreadPoolExecutor.Companion.getInstance());
 
         // Check app update
         update();
@@ -374,11 +380,24 @@ public class EhApplication extends RecordingApplication {
         if (application.mOkHttpClient == null) {
 //            Dispatcher dispatcher = new Dispatcher();
 //            dispatcher.setMaxRequestsPerHost(4);
+            
+            // 创建优化的连接池 - 针对后台下载优化
+            // 最多保持 10 个连接，每个连接保持 5 分钟，适合后台长时间下载
+            ConnectionPool connectionPool = new ConnectionPool(
+                    10,  // 最大空闲连接数
+                    5,   // 连接保活时间（分钟）
+                    TimeUnit.MINUTES
+            );
+            
             OkHttpClient.Builder builder = new OkHttpClient.Builder()
+                    .followRedirects(true)
+                    .followSslRedirects(true)
                     .connectTimeout(10, TimeUnit.SECONDS)
                     .readTimeout(10, TimeUnit.SECONDS)
                     .writeTimeout(10, TimeUnit.SECONDS)
 //                    .callTimeout(10, TimeUnit.SECONDS)
+                    .connectionPool(connectionPool)  // 添加优化的连接池
+                    .retryOnConnectionFailure(true)  // 连接失败时重试
                     .cookieJar(getEhCookieStore(application))
                     .cache(getOkHttpCache(application))
 //                    .hostnameVerifier((hostname, session) -> true)
@@ -395,12 +414,16 @@ public class EhApplication extends RecordingApplication {
                         Response response = chain.proceed(chain.request());
                         // 同步Cookie到WebView
                         if (response.headers("Set-Cookie") != null) {
-                            CookieManager cookieManager = CookieManager.getInstance();
-                            String url =chain.request().url().toString();
-                            for (String header : response.headers("Set-Cookie")) {
-                                cookieManager.setCookie(url, header);
+                            try {
+                                CookieManager cookieManager = CookieManager.getInstance();
+                                String url = chain.request().url().toString();
+                                for (String header : response.headers("Set-Cookie")) {
+                                    cookieManager.setCookie(url, header);
+                                }
+                                cookieManager.flush();
+                            } catch (Throwable t) {
+                                Log.e(TAG, "CookieManager/WebView sync skipped", t);
                             }
-                            cookieManager.flush();
                         }
                         return response;
                     })

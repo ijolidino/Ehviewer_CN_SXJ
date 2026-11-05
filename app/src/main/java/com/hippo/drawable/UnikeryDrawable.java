@@ -26,6 +26,8 @@ import com.hippo.conaco.Conaco;
 import com.hippo.conaco.ConacoTask;
 import com.hippo.conaco.Unikery;
 import com.hippo.lib.image.Image;
+//import com.hippo.lib.image.ImageBitmap;
+//import com.hippo.lib.image.ImageDrawable;
 import com.hippo.widget.ObservedTextView;
 
 public class UnikeryDrawable extends WrapDrawable implements Unikery<Image>,
@@ -62,7 +64,7 @@ public class UnikeryDrawable extends WrapDrawable implements Unikery<Image>,
         if (url != null) {
             mUrl = url;
             mConaco.load(new ConacoTask.Builder<Image>().setUnikery(this).setUrl(url).setKey(url));
-//            ConacoTask.Builder<ImageBitmap> builder =new ConacoTask.Builder<>();
+//            ConacoTask.Builder<Image> builder =new ConacoTask.Builder<>();
 //            builder.url = url;
 //            builder.unikery = this;
 //            builder.key = url;
@@ -139,9 +141,10 @@ public class UnikeryDrawable extends WrapDrawable implements Unikery<Image>,
     public boolean onGetValue(@NonNull Image value, int source) {
         Drawable drawable;
         try {
+//            drawable = new ImageDrawable(value);
             drawable =value.getDrawable();
         } catch (Exception e) {
-            Log.d(TAG, "The ImageBitmap is recycled", e);
+            Log.d(TAG, "The Image is recycled", e);
             return false;
         }
 

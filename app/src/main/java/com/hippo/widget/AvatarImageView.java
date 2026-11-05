@@ -53,6 +53,8 @@ import com.hippo.drawable.PreciselyClipDrawable;
 import com.hippo.ehviewer.EhApplication;
 import com.hippo.ehviewer.R;
 import com.hippo.lib.image.Image;
+//import com.hippo.lib.image.ImageBitmap;
+//import com.hippo.lib.image.ImageDrawable;
 import com.hippo.util.DrawableManager;
 
 import java.lang.annotation.Retention;
@@ -334,6 +336,7 @@ public class AvatarImageView extends FixedAspectImageView implements Unikery<Ima
         Drawable drawable;
         try {
             drawable = value.getDrawable();
+//            drawable = new ImageDrawable(value);
         } catch (Exception e) {
             // The image might be recycled because it is removed from memory cache.
             Log.d(TAG, "The image is recycled", e);

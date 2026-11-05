@@ -48,8 +48,9 @@ import com.hippo.ehviewer.client.EhRequest;
 import com.hippo.ehviewer.client.EhUrl;
 import com.hippo.ehviewer.client.data.GalleryDetail;
 import com.hippo.ehviewer.dao.DownloadInfo;
-import com.hippo.ehviewer.ui.scene.download.DownloadsScene;
 import com.hippo.lib.image.Image;
+//import com.hippo.lib.image.ImageBitmap;
+//import com.hippo.lib.image.ImageDrawable;
 import com.hippo.lib.yorozuya.IntIdGenerator;
 import com.hippo.util.DrawableManager;
 
@@ -67,7 +68,10 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     private Conaco<Image> mConaco;
     private String mKey;
     private String mUrl;
+    @Nullable
+    private DataContainer mDataContainer;
     private boolean mUseNetwork;
+    private boolean mHardware;
     private int mOffsetX = Integer.MIN_VALUE;
     private int mOffsetY = Integer.MIN_VALUE;
     private int mClipWidth = Integer.MIN_VALUE;
@@ -125,7 +129,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
             if (mFailed) {
                 onFailure();
             } else if (mTaskId == Unikery.INVALID_ID) /* if (!mConaco.isLoading(mTaskId)) TODO Update Conaco */ {
-                load(mKey, mUrl, mUseNetwork);
+                load(mKey, mUrl, mDataContainer, mUseNetwork, mHardware);
             }
         }
     }
@@ -242,7 +246,9 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
 
         mKey = key;
         mUrl = url;
+        mDataContainer = dataContainer;
         mUseNetwork = useNetwork;
+        mHardware = hardware;
 
         ConacoTask.Builder<Image> builder = new ConacoTask.Builder<Image>()
                 .setUnikery(this)
@@ -275,6 +281,7 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         mConaco.cancel(this);
         mKey = null;
         mUrl = null;
+        mDataContainer = null;
         clearDrawable();
     }
 
@@ -302,7 +309,12 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
     public boolean onGetValue(@NonNull Image value, int source) {
         Drawable drawable;
         try {
-            drawable = value.getDrawable();
+            Drawable.ConstantState state = value.getDrawable().getConstantState();
+            if (state!=null){
+                drawable = state.newDrawable();
+            }else {
+                drawable = value.getDrawable();
+            }
         } catch (Exception e) {
             // The image might be recycled because it is removed from memory cache.
             Log.d(TAG, "The image is recycled", e);
@@ -310,10 +322,10 @@ public class LoadImageView extends FixedAspectImageView implements Unikery<Image
         }
 
         if (Integer.MIN_VALUE != mOffsetX) {
-            Drawable.ConstantState state = value.getDrawable().getConstantState();
-            if (state != null) {
-                drawable = state.newDrawable();
-            }
+//            Drawable.ConstantState state = value.getDrawable().getConstantState();
+//            if (state != null) {
+//                drawable = state.newDrawable();
+//            }
             drawable = new PreciselyClipDrawable(drawable, mOffsetX, mOffsetY, mClipWidth, mClipHeight);
         }
 
